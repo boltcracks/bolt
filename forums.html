@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolt! - Forums</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1C2526 70%, #2A3439 100%);
+            font-family: 'Courier New', monospace;
+            color: #7289DA;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        h1 {
+            font-size: 80px;
+            font-weight: bold;
+            color: #7289DA;
+            text-shadow: 
+                -4px -4px 0 #FF0000, 4px -4px 0 #FF0000,
+                -4px 4px 0 #FF0000, 4px 4px 0 #FF0000,
+                -4px -4px 0 #800080, 4px -4px 0 #800080,
+                -4px 4px 0 #800080, 4px 4px 0 #800080;
+            letter-spacing: 3px;
+            position: absolute;
+            top: 20px;
+            animation: glow 2s infinite alternate;
+        }
+        @keyframes glow {
+            0% { text-shadow: -4px -4px 0 #FF0000, 4px -4px 0 #FF0000, -4px 4px 0 #FF0000, 4px 4px 0 #FF0000, -4px -4px 0 #800080, 4px -4px 0 #800080, -4px 4px 0 #800080, 4px 4px 0 #800080; }
+            100% { text-shadow: -6px -6px 10px #FF0000, 6px -6px 10px #FF0000, -6px 6px 10px #FF0000, 6px 6px 10px #FF0000, -6px -6px 10px #800080, 6px -6px 10px #800080, -6px 6px 10px #800080, 6px 6px 10px #800080; }
+        }
+        .tab-container {
+            display: flex;
+            gap: 15px;
+            position: absolute;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .tab {
+            font-size: 22px;
+            font-weight: bold;
+            color: #7289DA;
+            background: linear-gradient(45deg, #2A3439, #3A4449);
+            border: 2px solid #FF0000;
+            padding: 12px 25px;
+            cursor: pointer;
+            border-radius: 8px;
+            text-shadow: 0 0 5px #800080;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.5);
+        }
+        .tab:hover, .tab.active {
+            background: linear-gradient(45deg, #FF0000, #800080);
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(255, 0, 0, 0.8);
+            transform: scale(1.05);
+        }
+        #chat-container {
+            width: 650px;
+            height: 450px;
+            background: rgba(42, 52, 57, 0.9);
+            border: 2px solid #7289DA;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(114, 137, 218, 0.5);
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #7289DA #2A3439;
+        }
+        #chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat-messages::-webkit-scrollbar-track {
+            background: #2A3439;
+        }
+        #chat-messages::-webkit-scrollbar-thumb {
+            background: #7289DA;
+            border-radius: 4px;
+        }
+        .message {
+            margin: 15px 0;
+            padding: 15px;
+            background: #1C2526;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
+        }
+        .message:hover {
+            transform: translateY(-2px);
+        }
+        .message.pinned {
+            background: linear-gradient(45deg, #2A3439, #3A4449);
+            border: 1px solid #FF0000;
+        }
+        .message .username {
+            font-weight: bold;
+            color: #FF0000;
+            text-shadow: 0 0 5px #800080;
+        }
+        .message .content {
+            color: #7289DA;
+            word-wrap: break-word;
+        }
+        .message .timestamp {
+            font-size: 12px;
+            color: #800080;
+            text-shadow: 0 0 3px #FF0000;
+            margin-left: 10px;
+        }
+        #chat-input {
+            display: flex;
+            padding: 15px;
+            background: #2A3439;
+            border-top: 1px solid #7289DA;
+            border-radius: 0 0 15px 15px;
+        }
+        #chat-input input {
+            flex: 1;
+            padding: 12px;
+            background: #1C2526;
+            border: 1px solid #7289DA;
+            color: #fff;
+            font-size: 14px;
+            border-radius: 5px 0 0 5px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        #chat-input input:focus {
+            border-color: #FF0000;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+        #chat-input button {
+            padding: 12px 25px;
+            background: linear-gradient(45deg, #7289DA, #FF0000);
+            border: none;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 0 5px 5px 0;
+            text-shadow: 0 0 5px #800080;
+            transition: transform 0.3s ease;
+        }
+        #chat-input button:hover {
+            transform: scale(1.05);
+        }
+        .top-right-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        .top-right-buttons button {
+            font-size: 16px;
+            padding: 12px 25px;
+            background: linear-gradient(45deg, #FF0000, #800080);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 8px;
+            text-shadow: 0 0 5px #7289DA;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(128, 0, 128, 0.5);
+        }
+        .top-right-buttons button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 25px rgba(128, 0, 128, 0.8);
+        }
+        #download-button {
+            background: linear-gradient(45deg, #7289DA, #FF0000);
+        }
+        .background-effects {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: radial-gradient(circle, #FF0000 20%, #800080 80%);
+            border-radius: 50%;
+            animation: float 5s infinite ease-in-out;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); opacity: 0.8; }
+            50% { transform: translateY(-20px); opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-effects" id="particles"></div>
+    <div class="top-right-buttons">
+        <button id="profile-button" onclick="window.location.href='profile.html'">Profile</button>
+        <button id="download-button" onclick="downloadPlaceholder()">DOWNLOAD</button>
+        <button id="logout-button" onclick="logout()">Log Out</button>
+    </div>
+    <h1>Bolt!</h1>
+    <div class="tab-container">
+        <div class="tab" data-tab="cs2" onclick="switchTab('cs2')">CS2 CRACKS</div>
+        <div class="tab" data-tab="csgo" onclick="switchTab('csgo')">CS:GO CRACKS</div>
+    </div>
+    <div id="chat-container">
+        <div id="chat-messages"></div>
+        <div id="chat-input">
+            <input type="text" id="message-input" placeholder="Type your message..." maxlength="200">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const ENCRYPTION_KEY = 'Bolt!Crack2025';
+        let currentUser = null;
+        let currentTab = 'cs2';
+        let ws = new WebSocket('ws://localhost:8080');
+        let messages = { cs2: [], csgo: [] };
+
+        const storedUsers = decryptUsers();
+        if (storedUsers) {
+            currentUser = storedUsers[storedUsers.length - 1];
+        }
+        if (!currentUser) {
+            alert('Sign in first, asshole!');
+            window.location.href = 'index.html';
+        }
+
+        ws.onopen = () => console.log('Connected to WebSocket.');
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'init') {
+                messages = data.messages;
+                loadMessages();
+            } else if (data.type === 'chat' && data.tab === currentTab) {
+                messages[currentTab].push(data.message);
+                loadMessages();
+            }
+        };
+        ws.onerror = () => alert('WebSocket fucked up—start the server!');
+
+        function decryptUsers() {
+            const encrypted = localStorage.getItem('boltUsers');
+            if (!encrypted) return null;
+            try {
+                const bytes = CryptoJS.AES.decrypt(encrypted, ENCRYPTION_KEY);
+                return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Particles
+        const particleContainer = document.getElementById('particles');
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 5 + 's';
+            particleContainer.appendChild(particle);
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+            loadMessages();
+        }
+
+        function loadMessages() {
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = '';
+            messages[currentTab].forEach(msg => {
+                const div = document.createElement('div');
+                div.className = `message ${msg.pinned ? 'pinned' : ''}`;
+                const time = new Date(msg.timestamp).toLocaleTimeString();
+                div.innerHTML = `<span class="username">${msg.username}</span>: <span class="content">${escapeHtml(msg.content)}</span> <span class="timestamp">[${time}]</span>`;
+                chatMessages.appendChild(div);
+            });
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const content = input.value.trim();
+            if (!content) return;
+            ws.send(JSON.stringify({ type: 'chat', tab: currentTab, username: currentUser.username, content }));
+            input.value = '';
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function downloadPlaceholder() {
+            alert('Download coming soon, prick!');
+        }
+
+        function logout() {
+            currentUser = null;
+            window.location.href = 'index.html';
+        }
+
+        document.querySelector('.tab[data-tab="cs2"]').classList.add('active');
+        loadMessages();
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
